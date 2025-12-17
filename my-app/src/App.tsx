@@ -107,7 +107,7 @@ const loadAvailableFromStorage = (): Record<string, boolean> => {
 const ingredientKey = (name: string) => name.trim().toLowerCase();
 
 function App() {
-  const [activeView, setActiveView] = useState<'dishes' | 'planner' | 'shopping'>('dishes');
+  const [activeView, setActiveView] = useState<'dishes' | 'planner' | 'shopping'>('planner');
   const [dishes, setDishes] = useState<Dish[]>(() => mergeWithDefaults(loadDishesFromStorage()));
   const [dishName, setDishName] = useState('');
   const [dishIngredients, setDishIngredients] = useState('');

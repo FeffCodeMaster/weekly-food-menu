@@ -7,12 +7,12 @@ beforeEach(() => {
   window.localStorage.clear();
 });
 
-test('renders dish library view by default', () => {
+test('renders weekly planner view by default', () => {
   render(<App />);
 
   expect(screen.getByRole('heading', { name: /plan dinners without the scramble/i })).toBeInTheDocument();
-  const dishLibraryTab = screen.getByRole('tab', { name: /dish library/i });
-  expect(dishLibraryTab).toHaveAttribute('aria-selected', 'true');
+  const plannerTab = screen.getByRole('tab', { name: /weekly planner/i });
+  expect(plannerTab).toHaveAttribute('aria-selected', 'true');
 });
 
 test('allows adding and removing a dish', async () => {
