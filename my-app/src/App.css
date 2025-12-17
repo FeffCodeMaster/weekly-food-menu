@@ -280,7 +280,7 @@ button {
 
 .day-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   padding: 12px;
@@ -323,6 +323,7 @@ button {
   flex-direction: column;
   gap: 6px;
   min-width: 180px;
+  width: 100%;
 }
 
 .select-label {
