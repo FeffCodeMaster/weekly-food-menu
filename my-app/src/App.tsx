@@ -15,6 +15,7 @@ const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sat
 
 const DISHES_STORAGE_KEY = 'weekly-menu-dishes';
 const PLAN_STORAGE_KEY = 'weekly-menu-plan';
+const AVAILABLE_STORAGE_KEY = 'weekly-menu-available';
 const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
 const createEmptyPlan = () =>
@@ -88,6 +89,23 @@ const loadPlanFromStorage = (): Record<string, string | null> => {
   }
 };
 
+const loadAvailableFromStorage = (): Record<string, boolean> => {
+  if (!isBrowser) return {};
+  try {
+    const saved = window.localStorage.getItem(AVAILABLE_STORAGE_KEY);
+    if (!saved) return {};
+    const parsed = JSON.parse(saved);
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, boolean>;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+};
+
+const ingredientKey = (name: string) => name.trim().toLowerCase();
+
 function App() {
   const [activeView, setActiveView] = useState<'dishes' | 'planner' | 'shopping'>('dishes');
   const [dishes, setDishes] = useState<Dish[]>(() => mergeWithDefaults(loadDishesFromStorage()));
@@ -99,6 +117,7 @@ function App() {
   const [editingIngredients, setEditingIngredients] = useState('');
   const [editingSpecial, setEditingSpecial] = useState(false);
   const [weeklyPlan, setWeeklyPlan] = useState<Record<string, string | null>>(loadPlanFromStorage);
+  const [availableAtHome, setAvailableAtHome] = useState<Record<string, boolean>>(loadAvailableFromStorage);
 
   const dishOptions = useMemo(
     () => dishes.filter((dish) => dish.includeInPlanner !== false).map((dish) => ({ value: dish.id, label: dish.name })),
@@ -142,6 +161,11 @@ function App() {
     if (!isBrowser) return;
     window.localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(weeklyPlan));
   }, [weeklyPlan]);
+
+  useEffect(() => {
+    if (!isBrowser) return;
+    window.localStorage.setItem(AVAILABLE_STORAGE_KEY, JSON.stringify(availableAtHome));
+  }, [availableAtHome]);
 
   const addDish = (event: FormEvent) => {
     event.preventDefault();
@@ -262,6 +286,11 @@ function App() {
   const plannedDishName = (dishId: string | null) => dishes.find((dish) => dish.id === dishId)?.name || 'Pick a dish';
 
   const clearPlan = (day: string) => assignDishToDay(day, '');
+
+  const toggleAvailable = (name: string, available: boolean) => {
+    const key = ingredientKey(name);
+    setAvailableAtHome((prev) => ({ ...prev, [key]: available }));
+  };
 
   return (
     <div className="page">
@@ -550,8 +579,8 @@ function App() {
             <div className="panel-head">
               <div>
                 <p className="eyebrow">Step 3</p>
-                <h2>Shopping list</h2>
-                <p className="subtext">Built from the dishes you have planned this week.</p>
+                <h2>Required ingredients</h2>
+                <p className="subtext">Mark what you already have at home to build the final shopping list.</p>
               </div>
               <button className="ghost" type="button" onClick={() => setActiveView('planner')}>
                 Back to planner
@@ -572,14 +601,26 @@ function App() {
               </div>
             ) : (
               <div className="shopping-list">
-                {shoppingItems.map((item) => (
-                  <div key={item.name} className="shopping-row">
-                    <span>{item.name}</span>
-                    <span className="shopping-count" aria-label={`${item.count} times`}>
-                      x{item.count}
-                    </span>
-                  </div>
-                ))}
+                {shoppingItems.map((item) => {
+                  const key = ingredientKey(item.name);
+                  const available = Boolean(availableAtHome[key]);
+                  return (
+                    <label key={item.name} className="shopping-row">
+                      <div className="shopping-main">
+                        <input
+                          type="checkbox"
+                          checked={available}
+                          aria-label={`Mark ${item.name} available at home`}
+                          onChange={(event) => toggleAvailable(item.name, event.target.checked)}
+                        />
+                        <span className={available ? 'ingredient-available' : ''}>{item.name}</span>
+                      </div>
+                      <span className="shopping-count" aria-label={`${item.count} times`}>
+                        x{item.count}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -587,21 +628,30 @@ function App() {
           <section className="panel">
             <div className="panel-head">
               <div>
-                <p className="eyebrow">Planned dishes</p>
-                <h2>Overview</h2>
-                <p className="subtext">See what contributes to the list.</p>
+                <p className="eyebrow">To buy</p>
+                <h2>Shopping list</h2>
+                <p className="subtext">Only items not marked as available at home.</p>
               </div>
             </div>
-            <div className="summary">
-              {daysOfWeek.map((day) => (
-                <div key={day} className="summary-row">
-                  <span>{day}</span>
-                  <span className="summary-dish">
-                    {weeklyPlan[day] ? plannedDishName(weeklyPlan[day]) : 'Not planned'}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {shoppingItems.filter((item) => !availableAtHome[ingredientKey(item.name)]).length === 0 ? (
+              <div className="empty">
+                <p>Everything is already at home.</p>
+                <p className="subtext">Uncheck items on the left to add them back to the shopping list.</p>
+              </div>
+            ) : (
+              <div className="shopping-list">
+                {shoppingItems
+                  .filter((item) => !availableAtHome[ingredientKey(item.name)])
+                  .map((item) => (
+                    <div key={item.name} className="shopping-row">
+                      <span>{item.name}</span>
+                      <span className="shopping-count" aria-label={`${item.count} times`}>
+                        x{item.count}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
           </section>
         </main>
       )}

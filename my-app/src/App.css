@@ -347,6 +347,22 @@ button {
   background: #f8fafc;
 }
 
+.shopping-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shopping-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+}
+
+.ingredient-available {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
 .shopping-count {
   font-weight: 800;
   color: var(--accent-strong);

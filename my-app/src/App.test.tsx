@@ -108,3 +108,28 @@ test('only one special dish can be planned per week', async () => {
   const seafoodOption = within(selects[1]).getByRole('option', { name: /seafood/i });
   expect(seafoodOption).toBeDisabled();
 });
+
+test('marking an ingredient available removes it from the final shopping list', async () => {
+  render(<App />);
+
+  await userEvent.type(screen.getByLabelText(/dish name/i), 'Tacos');
+  await userEvent.type(screen.getByLabelText(/ingredients/i), 'Tortillas, beans');
+  await userEvent.click(screen.getByRole('button', { name: /save dish/i }));
+
+  await userEvent.click(screen.getByRole('tab', { name: /weekly planner/i }));
+  const selects = screen.getAllByRole('combobox');
+  await userEvent.selectOptions(selects[0], screen.getByText(/tacos/i));
+
+  await userEvent.click(screen.getByRole('tab', { name: /shopping list/i }));
+
+  const toBuyHeading = screen.getByRole('heading', { name: /^shopping list$/i });
+  const toBuyPanel = toBuyHeading.closest('.panel');
+  expect(toBuyPanel).not.toBeNull();
+  const toBuyScope = within(toBuyPanel as HTMLElement);
+  expect(toBuyScope.getByText(/tortillas/i)).toBeInTheDocument();
+
+  await userEvent.click(screen.getByLabelText(/mark tortillas available at home/i));
+
+  expect(toBuyScope.queryByText(/tortillas/i)).not.toBeInTheDocument();
+  expect(toBuyScope.getByText(/beans/i)).toBeInTheDocument();
+});
