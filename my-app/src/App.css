@@ -401,6 +401,21 @@ button {
   color: var(--accent-strong);
 }
 
+.other-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.share-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 @media (max-width: 720px) {
   .topbar {
     flex-direction: column;

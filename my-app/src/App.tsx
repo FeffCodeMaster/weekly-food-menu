@@ -1,6 +1,7 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import './App.css';
 import defaultDishes from './defaultDishes.json';
+import otherItems from './otherItems.json';
 
 type Dish = {
   id: string;
@@ -21,6 +22,7 @@ const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sat
 const DISHES_STORAGE_KEY = 'weekly-menu-dishes';
 const PLAN_STORAGE_KEY = 'weekly-menu-plan';
 const AVAILABLE_STORAGE_KEY = 'weekly-menu-available';
+const OTHER_AVAILABLE_STORAGE_KEY = 'weekly-menu-other-available';
 const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
 const createEmptyPlan = () =>
@@ -113,6 +115,25 @@ const loadAvailableFromStorage = (): Record<string, boolean> => {
   }
 };
 
+const loadOtherAvailableFromStorage = (items: string[]): Record<string, boolean> => {
+  const defaults = items.reduce((acc, item) => {
+    acc[ingredientKey(item)] = true;
+    return acc;
+  }, {} as Record<string, boolean>);
+  if (!isBrowser) return defaults;
+  try {
+    const saved = window.localStorage.getItem(OTHER_AVAILABLE_STORAGE_KEY);
+    if (!saved) return defaults;
+    const parsed = JSON.parse(saved);
+    if (parsed && typeof parsed === 'object') {
+      return { ...defaults, ...(parsed as Record<string, boolean>) };
+    }
+    return defaults;
+  } catch {
+    return defaults;
+  }
+};
+
 const ingredientKey = (name: string) => name.trim().toLowerCase();
 
 function App() {
@@ -127,6 +148,9 @@ function App() {
   const [editingSpecial, setEditingSpecial] = useState(false);
   const [weeklyPlan, setWeeklyPlan] = useState<Record<string, DayPlan>>(loadPlanFromStorage);
   const [availableAtHome, setAvailableAtHome] = useState<Record<string, boolean>>(loadAvailableFromStorage);
+  const [otherAvailable, setOtherAvailable] = useState<Record<string, boolean>>(
+    loadOtherAvailableFromStorage(otherItems as string[]),
+  );
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
   const dishOptions = useMemo(
@@ -169,6 +193,11 @@ function App() {
     if (!isBrowser) return;
     window.localStorage.setItem(AVAILABLE_STORAGE_KEY, JSON.stringify(availableAtHome));
   }, [availableAtHome]);
+
+  useEffect(() => {
+    if (!isBrowser) return;
+    window.localStorage.setItem(OTHER_AVAILABLE_STORAGE_KEY, JSON.stringify(otherAvailable));
+  }, [otherAvailable]);
 
   const addDish = (event: FormEvent) => {
     event.preventDefault();
@@ -300,14 +329,29 @@ function App() {
     setAvailableAtHome((prev) => ({ ...prev, [key]: available }));
   };
 
+  const toggleOtherAvailable = (name: string, available: boolean) => {
+    const key = ingredientKey(name);
+    setOtherAvailable((prev) => ({ ...prev, [key]: available }));
+  };
+
   const toBuyItems = useMemo(
     () => shoppingItems.filter((item) => !availableAtHome[ingredientKey(item.name)]),
     [shoppingItems, availableAtHome],
   );
 
+  const otherToBuy = useMemo(
+    () => (otherItems as string[]).filter((item) => !otherAvailable[ingredientKey(item)]),
+    [otherAvailable],
+  );
+
+  const combinedToBuy = useMemo(
+    () => [...toBuyItems, ...otherToBuy.map((name) => ({ name, count: 1 }))],
+    [toBuyItems, otherToBuy],
+  );
+
   const formattedShoppingList = useMemo(
-    () => toBuyItems.map((item) => `- ${item.name}${item.count > 1 ? ` (x${item.count})` : ''}`).join('\n'),
-    [toBuyItems],
+    () => combinedToBuy.map((item) => `- ${item.name}${item.count > 1 ? ` (x${item.count})` : ''}`).join('\n'),
+    [combinedToBuy],
   );
 
   const handleCopyShoppingList = async () => {
@@ -701,6 +745,30 @@ function App() {
                     </label>
                   );
                 })}
+                <div className="other-list">
+                  <p className="eyebrow">Household items</p>
+                  <div className="shopping-list">
+                    {(otherItems as string[]).map((item) => {
+                      const key = ingredientKey(item);
+                      const available = Boolean(otherAvailable[key]);
+                      return (
+                        <label key={item} className="shopping-row">
+                          <div className="shopping-main">
+                            <input
+                              type="checkbox"
+                              checked={available}
+                              aria-label={`Keep ${item} off shopping list`}
+                              onChange={(event) => toggleOtherAvailable(item, event.target.checked)}
+                            />
+                            <span className={available ? 'ingredient-available' : ''}>{item}</span>
+                          </div>
+                          <span className="shopping-count">x1</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="subtext">Uncheck to add to the shopping list.</p>
+                </div>
               </div>
             )}
           </section>
@@ -713,14 +781,14 @@ function App() {
                 <p className="subtext">Only items not marked as available at home.</p>
               </div>
             </div>
-            {toBuyItems.length === 0 ? (
+            {combinedToBuy.length === 0 ? (
               <div className="empty">
                 <p>Everything is already at home.</p>
                 <p className="subtext">Uncheck items on the left to add them back to the shopping list.</p>
               </div>
             ) : (
               <div className="shopping-list">
-                {toBuyItems.map((item) => (
+                {combinedToBuy.map((item) => (
                   <label key={item.name} className="shopping-row">
                     <div className="shopping-main">
                       <input type="checkbox" aria-label={`Mark ${item.name} checked`} />
@@ -750,4 +818,3 @@ function App() {
 }
 
 export default App;
-
