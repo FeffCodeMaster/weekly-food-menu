@@ -696,12 +696,18 @@ function App() {
                 {shoppingItems
                   .filter((item) => !availableAtHome[ingredientKey(item.name)])
                   .map((item) => (
-                    <div key={item.name} className="shopping-row">
-                      <span>{item.name}</span>
+                    <label key={item.name} className="shopping-row">
+                      <div className="shopping-main">
+                        <input
+                          type="checkbox"
+                          aria-label={`Mark ${item.name} checked`}
+                        />
+                        <span>{item.name}</span>
+                      </div>
                       <span className="shopping-count" aria-label={`${item.count} times`}>
                         x{item.count}
                       </span>
-                    </div>
+                    </label>
                   ))}
               </div>
             )}

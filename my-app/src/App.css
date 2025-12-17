@@ -386,6 +386,11 @@ button {
   height: 16px;
 }
 
+.shopping-main input:checked + span {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
 .ingredient-available {
   text-decoration: line-through;
   color: var(--muted);
