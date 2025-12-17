@@ -353,6 +353,12 @@ button {
   font-weight: 700;
 }
 
+.sticky {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+}
+
 .shopping-list {
   display: flex;
   flex-direction: column;

@@ -598,7 +598,7 @@ function App() {
             )}
           </section>
 
-          <section className="panel">
+          <section className="panel sticky">
             <div className="panel-head">
               <div>
                 <p className="eyebrow">Overview</p>
