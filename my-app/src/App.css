@@ -298,17 +298,38 @@ button {
   font-weight: 700;
 }
 
+.day-subdish {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .day-actions {
   display: flex;
   gap: 8px;
   align-items: center;
   width: 100%;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .day-actions select {
   flex: 1;
   min-width: 180px;
+}
+
+.select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.select-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.08em;
 }
 
 .summary {
