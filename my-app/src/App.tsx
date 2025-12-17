@@ -127,6 +127,7 @@ function App() {
   const [editingSpecial, setEditingSpecial] = useState(false);
   const [weeklyPlan, setWeeklyPlan] = useState<Record<string, DayPlan>>(loadPlanFromStorage);
   const [availableAtHome, setAvailableAtHome] = useState<Record<string, boolean>>(loadAvailableFromStorage);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
   const dishOptions = useMemo(
     () => dishes.filter((dish) => dish.includeInPlanner !== false).map((dish) => ({ value: dish.id, label: dish.name })),
@@ -298,6 +299,32 @@ function App() {
     const key = ingredientKey(name);
     setAvailableAtHome((prev) => ({ ...prev, [key]: available }));
   };
+
+  const toBuyItems = useMemo(
+    () => shoppingItems.filter((item) => !availableAtHome[ingredientKey(item.name)]),
+    [shoppingItems, availableAtHome],
+  );
+
+  const formattedShoppingList = useMemo(
+    () => toBuyItems.map((item) => `- ${item.name}${item.count > 1 ? ` (x${item.count})` : ''}`).join('\n'),
+    [toBuyItems],
+  );
+
+  const handleCopyShoppingList = async () => {
+    if (!formattedShoppingList) {
+      setCopyStatus('error');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(formattedShoppingList);
+      setCopyStatus('copied');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    } catch (error) {
+      setCopyStatus('error');
+    }
+  };
+
+  const smsBody = encodeURIComponent(formattedShoppingList || 'Shopping list is empty.');
 
   const hasSpecialElsewhere = (day: string, slot: 'primary' | 'secondary') => {
     return Object.entries(weeklyPlan).some(([existingDay, planned]) => {
@@ -686,29 +713,33 @@ function App() {
                 <p className="subtext">Only items not marked as available at home.</p>
               </div>
             </div>
-            {shoppingItems.filter((item) => !availableAtHome[ingredientKey(item.name)]).length === 0 ? (
+            {toBuyItems.length === 0 ? (
               <div className="empty">
                 <p>Everything is already at home.</p>
                 <p className="subtext">Uncheck items on the left to add them back to the shopping list.</p>
               </div>
             ) : (
               <div className="shopping-list">
-                {shoppingItems
-                  .filter((item) => !availableAtHome[ingredientKey(item.name)])
-                  .map((item) => (
-                    <label key={item.name} className="shopping-row">
-                      <div className="shopping-main">
-                        <input
-                          type="checkbox"
-                          aria-label={`Mark ${item.name} checked`}
-                        />
-                        <span>{item.name}</span>
-                      </div>
-                      <span className="shopping-count" aria-label={`${item.count} times`}>
-                        x{item.count}
-                      </span>
-                    </label>
-                  ))}
+                {toBuyItems.map((item) => (
+                  <label key={item.name} className="shopping-row">
+                    <div className="shopping-main">
+                      <input type="checkbox" aria-label={`Mark ${item.name} checked`} />
+                      <span>{item.name}</span>
+                    </div>
+                    <span className="shopping-count" aria-label={`${item.count} times`}>
+                      x{item.count}
+                    </span>
+                  </label>
+                ))}
+                <div className="share-actions">
+                  <button className="primary" type="button" onClick={handleCopyShoppingList}>
+                    {copyStatus === 'copied' ? 'Copied!' : 'Copy to clipboard'}
+                  </button>
+                  <a className="ghost" href={`sms:?&body=${smsBody}`}>
+                    Send via SMS
+                  </a>
+                  {copyStatus === 'error' && <p className="subtext">Could not copy. Try again.</p>}
+                </div>
               </div>
             )}
           </section>
@@ -719,3 +750,4 @@ function App() {
 }
 
 export default App;
+
