@@ -190,6 +190,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: #f9fafb;
+  position: relative;
 }
 
 .dish-card.editing {
@@ -202,6 +203,22 @@ button {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.inline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.planner-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .dish-name {
@@ -220,9 +237,20 @@ button {
   font-size: 12px;
 }
 
+.pill.accent {
+  background: #ecfdf3;
+  color: #16a34a;
+}
+
 .pill.muted {
   background: #e2e8f0;
   color: var(--muted);
+}
+
+.pill-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .ingredient-list {

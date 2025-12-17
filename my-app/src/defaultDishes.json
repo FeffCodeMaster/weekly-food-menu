@@ -1,0 +1,178 @@
+[
+  {
+    "id": "spaghetti-bolognese",
+    "name": "Spaghetti & Köttfärsås",
+    "ingredients": [
+      "Spaghetti",
+      "Nötfärs 500g",
+      "Krossade tomater",
+      "Gul lök",
+      "Vit lök",
+      "Tomatpuré"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "taco-pizza",
+    "name": "TacoPizza",
+    "ingredients": [
+      "Tortillas",
+      "Riven ost",
+      "Ketchup"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "korv-med-bröd",
+    "name": "Korv med bröd",
+    "ingredients": [
+      "Korv",
+      "Korvbröd",
+      "Ketchup",
+      "Senap",
+      "Rostadlök"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "korv-med-bröd",
+    "name": "Korv med bröd",
+    "ingredients": [
+      "Korv",
+      "Korvbröd",
+      "Ketchup",
+      "Senap",
+      "Rostadlök"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "mc-dondalds",
+    "name": "Mcdonald's",
+    "ingredients": [],
+    "includeInPlanner": true,
+    "isDefault": true,
+    "special": true
+  },
+  {
+    "id": "kycklingfärs-pasta",
+    "name": "Kycklingfärs pasta",
+    "ingredients": [
+      "Kycklingfärs 500g",
+      "Pasta Rigatoni",
+      "Gul lök",
+      "Vit lök",
+      "Tomatpuré",
+      "Lökpulver",
+      "Paprika pulver",
+      "Oregano",
+      "Cayennepeppar",
+      "Buljongtärning Höns",
+      "Vispgrädde 40%",
+      "Soltrokade tomater",
+      "Spenat"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "köttbullar-och-makaroner",
+    "name": "Köttbullar och makaroner",
+    "ingredients": [
+      "Köttbullar",
+      "Makaroner",
+      "Ketchup"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "tomat-soppa",
+    "name": "Tomatsoppa",
+    "ingredients": [
+      "Kelda tomatsoppa",
+      "Bröd",
+      "Creme fraiche"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "pytt-i-panna",
+    "name": "Pytt i panna",
+    "ingredients": [
+      "Pytt i panna",
+      "Ketchup",
+      "Ägg",
+      "Inlagda Rödbetor"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "Hemmagjorda-hamburgare",
+    "name": "Hemmagjoda hamburgare",
+    "ingredients": [
+      "Burgare",
+      "Hamburgarbröd",
+      "Salad",
+      "Gul lök",
+      "Tomat",
+      "Gurka",
+      "Hamburgardressing"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "tacos",
+    "name": "Tacos",
+    "ingredients": [
+      "Nötfärs 500g",
+      "Tortillas",
+      "Salad",
+      "Majs",
+      "Tomat",
+      "Gurka",
+      "Grädfil",
+      "Riven ost",
+      "Tacosås"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "pannkakor",
+    "name": "Pannkakor",
+    "ingredients": [
+      "Mjölk 1L",
+      "Mjöl",
+      "Ägg",
+      "Röda linser",
+      "Jordgubbssylt",
+      "Grädde"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true
+  },
+  {
+    "id": "pizza",
+    "name": "Pizza",
+    "ingredients": [],
+    "includeInPlanner": true,
+    "isDefault": true,
+    "special": true
+  },
+  {
+    "id": "sushi",
+    "name": "Sushi",
+    "ingredients": [],
+    "includeInPlanner": true,
+    "isDefault": true,
+    "special": true
+  }
+]

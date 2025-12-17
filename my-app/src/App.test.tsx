@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 
@@ -61,6 +61,8 @@ test('builds a shopping list from planned dishes', async () => {
   await userEvent.type(screen.getByLabelText(/ingredients/i), 'Tortillas, beans');
   await userEvent.click(screen.getByRole('button', { name: /save dish/i }));
 
+  await userEvent.click(screen.getByRole('tab', { name: /weekly planner/i }));
+
   const selects = screen.getAllByRole('combobox');
   await userEvent.selectOptions(selects[0], screen.getByText(/tacos/i));
 
@@ -68,4 +70,41 @@ test('builds a shopping list from planned dishes', async () => {
 
   expect(screen.getByText(/tortillas/i)).toBeInTheDocument();
   expect(screen.getByText(/beans/i)).toBeInTheDocument();
+});
+
+test('can hide a dish from the planner dropdown', async () => {
+  render(<App />);
+
+  await userEvent.type(screen.getByLabelText(/dish name/i), 'Soup');
+  await userEvent.type(screen.getByLabelText(/ingredients/i), 'Broth, carrots');
+  await userEvent.click(screen.getByRole('button', { name: /save dish/i }));
+
+  const toggles = screen.getAllByLabelText(/show in planner/i);
+  await userEvent.click(toggles[toggles.length - 1]);
+
+  await userEvent.click(screen.getByRole('tab', { name: /weekly planner/i }));
+  const options = screen.queryAllByRole('option', { name: /soup/i });
+  expect(options.length).toBe(0);
+});
+
+test('only one special dish can be planned per week', async () => {
+  render(<App />);
+
+  await userEvent.type(screen.getByLabelText(/dish name/i), 'Prime Rib');
+  await userEvent.type(screen.getByLabelText(/ingredients/i), 'Beef, salt');
+  await userEvent.click(screen.getByLabelText(/mark as special/i));
+  await userEvent.click(screen.getByRole('button', { name: /save dish/i }));
+
+  await userEvent.type(screen.getByLabelText(/dish name/i), 'Seafood');
+  await userEvent.type(screen.getByLabelText(/ingredients/i), 'Shrimp');
+  await userEvent.click(screen.getByLabelText(/mark as special/i));
+  await userEvent.click(screen.getByRole('button', { name: /save dish/i }));
+
+  await userEvent.click(screen.getByRole('tab', { name: /weekly planner/i }));
+
+  const selects = screen.getAllByRole('combobox');
+  await userEvent.selectOptions(selects[0], screen.getByText(/prime rib/i));
+
+  const seafoodOption = within(selects[1]).getByRole('option', { name: /seafood/i });
+  expect(seafoodOption).toBeDisabled();
 });
