@@ -370,6 +370,13 @@ function App() {
 
   const smsBody = encodeURIComponent(formattedShoppingList || 'Shopping list is empty.');
 
+  const clearWeek = () => {
+    setWeeklyPlan(createEmptyPlan());
+    setAvailableAtHome({});
+    setOtherAvailable(loadOtherAvailableFromStorage(otherItems as string[]));
+    setCopyStatus('idle');
+  };
+
   const hasSpecialElsewhere = (day: string, slot: 'primary' | 'secondary') => {
     return Object.entries(weeklyPlan).some(([existingDay, planned]) => {
       const slots: Array<[string, string | null]> = [
@@ -594,9 +601,14 @@ function App() {
                 <h2>Plan the week</h2>
                 <p className="subtext">Pick a dinner for each day. Change plans any time.</p>
               </div>
-              <button className="ghost" type="button" onClick={() => setActiveView('dishes')}>
-                Add more dishes
-              </button>
+              <div className="panel-actions">
+                <button className="ghost" type="button" onClick={() => setActiveView('dishes')}>
+                  Add more dishes
+                </button>
+                <button className="ghost danger" type="button" onClick={clearWeek}>
+                  Clear week
+                </button>
+              </div>
             </div>
             {dishes.length === 0 ? (
               <div className="empty">

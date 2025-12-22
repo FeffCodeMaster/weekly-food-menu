@@ -97,6 +97,13 @@
   margin-bottom: 14px;
 }
 
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .panel h2 {
   margin: 6px 0 4px;
 }
