@@ -2,6 +2,7 @@ import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import './App.css';
 import defaultDishes from './defaultDishes.json';
 import otherItems from './otherItems.json';
+import extraItems from './extraItems.json';
 
 type Dish = {
   id: string;
@@ -23,6 +24,7 @@ const DISHES_STORAGE_KEY = 'weekly-menu-dishes';
 const PLAN_STORAGE_KEY = 'weekly-menu-plan';
 const AVAILABLE_STORAGE_KEY = 'weekly-menu-available';
 const OTHER_AVAILABLE_STORAGE_KEY = 'weekly-menu-other-available';
+const EXTRA_AVAILABLE_STORAGE_KEY = 'weekly-menu-extra-available';
 const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
 const createEmptyPlan = () =>
@@ -100,6 +102,13 @@ const loadPlanFromStorage = (): Record<string, DayPlan> => {
   }
 };
 
+const ingredientKey = (name: string) => name.trim().toLowerCase();
+const buildDefaultAvailability = (items: string[]) =>
+  items.reduce((acc, item) => {
+    acc[ingredientKey(item)] = true;
+    return acc;
+  }, {} as Record<string, boolean>);
+
 const loadAvailableFromStorage = (): Record<string, boolean> => {
   if (!isBrowser) return {};
   try {
@@ -115,14 +124,11 @@ const loadAvailableFromStorage = (): Record<string, boolean> => {
   }
 };
 
-const loadOtherAvailableFromStorage = (items: string[]): Record<string, boolean> => {
-  const defaults = items.reduce((acc, item) => {
-    acc[ingredientKey(item)] = true;
-    return acc;
-  }, {} as Record<string, boolean>);
+const loadCustomAvailableFromStorage = (items: string[], storageKey: string): Record<string, boolean> => {
+  const defaults = buildDefaultAvailability(items);
   if (!isBrowser) return defaults;
   try {
-    const saved = window.localStorage.getItem(OTHER_AVAILABLE_STORAGE_KEY);
+    const saved = window.localStorage.getItem(storageKey);
     if (!saved) return defaults;
     const parsed = JSON.parse(saved);
     if (parsed && typeof parsed === 'object') {
@@ -133,8 +139,6 @@ const loadOtherAvailableFromStorage = (items: string[]): Record<string, boolean>
     return defaults;
   }
 };
-
-const ingredientKey = (name: string) => name.trim().toLowerCase();
 
 function App() {
   const [activeView, setActiveView] = useState<'dishes' | 'planner' | 'shopping'>('planner');
@@ -149,7 +153,10 @@ function App() {
   const [weeklyPlan, setWeeklyPlan] = useState<Record<string, DayPlan>>(loadPlanFromStorage);
   const [availableAtHome, setAvailableAtHome] = useState<Record<string, boolean>>(loadAvailableFromStorage);
   const [otherAvailable, setOtherAvailable] = useState<Record<string, boolean>>(
-    loadOtherAvailableFromStorage(otherItems as string[]),
+    loadCustomAvailableFromStorage(otherItems as string[], OTHER_AVAILABLE_STORAGE_KEY),
+  );
+  const [extraAvailable, setExtraAvailable] = useState<Record<string, boolean>>(
+    loadCustomAvailableFromStorage(extraItems as string[], EXTRA_AVAILABLE_STORAGE_KEY),
   );
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
@@ -198,6 +205,11 @@ function App() {
     if (!isBrowser) return;
     window.localStorage.setItem(OTHER_AVAILABLE_STORAGE_KEY, JSON.stringify(otherAvailable));
   }, [otherAvailable]);
+
+  useEffect(() => {
+    if (!isBrowser) return;
+    window.localStorage.setItem(EXTRA_AVAILABLE_STORAGE_KEY, JSON.stringify(extraAvailable));
+  }, [extraAvailable]);
 
   const addDish = (event: FormEvent) => {
     event.preventDefault();
@@ -334,6 +346,11 @@ function App() {
     setOtherAvailable((prev) => ({ ...prev, [key]: available }));
   };
 
+  const toggleExtraAvailable = (name: string, available: boolean) => {
+    const key = ingredientKey(name);
+    setExtraAvailable((prev) => ({ ...prev, [key]: available }));
+  };
+
   const toBuyItems = useMemo(
     () => shoppingItems.filter((item) => !availableAtHome[ingredientKey(item.name)]),
     [shoppingItems, availableAtHome],
@@ -344,9 +361,18 @@ function App() {
     [otherAvailable],
   );
 
+  const extraToBuy = useMemo(
+    () => (extraItems as string[]).filter((item) => !extraAvailable[ingredientKey(item)]),
+    [extraAvailable],
+  );
+
   const combinedToBuy = useMemo(
-    () => [...toBuyItems, ...otherToBuy.map((name) => ({ name, count: 1 }))],
-    [toBuyItems, otherToBuy],
+    () => [
+      ...toBuyItems,
+      ...otherToBuy.map((name) => ({ name, count: 1 })),
+      ...extraToBuy.map((name) => ({ name, count: 1 })),
+    ],
+    [toBuyItems, otherToBuy, extraToBuy],
   );
 
   const formattedShoppingList = useMemo(
@@ -373,7 +399,8 @@ function App() {
   const clearWeek = () => {
     setWeeklyPlan(createEmptyPlan());
     setAvailableAtHome({});
-    setOtherAvailable(loadOtherAvailableFromStorage(otherItems as string[]));
+    setOtherAvailable(loadCustomAvailableFromStorage(otherItems as string[], OTHER_AVAILABLE_STORAGE_KEY));
+    setExtraAvailable(loadCustomAvailableFromStorage(extraItems as string[], EXTRA_AVAILABLE_STORAGE_KEY));
     setCopyStatus('idle');
   };
 
@@ -771,6 +798,30 @@ function App() {
                               checked={available}
                               aria-label={`Keep ${item} off shopping list`}
                               onChange={(event) => toggleOtherAvailable(item, event.target.checked)}
+                            />
+                            <span className={available ? 'ingredient-available' : ''}>{item}</span>
+                          </div>
+                          <span className="shopping-count">x1</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="subtext">Uncheck to add to the shopping list.</p>
+                </div>
+                <div className="other-list">
+                  <p className="eyebrow">Pantry & breakfast</p>
+                  <div className="shopping-list">
+                    {(extraItems as string[]).map((item) => {
+                      const key = ingredientKey(item);
+                      const available = Boolean(extraAvailable[key]);
+                      return (
+                        <label key={item} className="shopping-row">
+                          <div className="shopping-main">
+                            <input
+                              type="checkbox"
+                              checked={available}
+                              aria-label={`Keep ${item} off shopping list`}
+                              onChange={(event) => toggleExtraAvailable(item, event.target.checked)}
                             />
                             <span className={available ? 'ingredient-available' : ''}>{item}</span>
                           </div>
