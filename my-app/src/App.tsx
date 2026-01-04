@@ -16,6 +16,7 @@ type Dish = {
 type DayPlan = {
   primary: string | null;
   secondary: string | null;
+  mealPrep: string | null;
 };
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -29,7 +30,7 @@ const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !=
 
 const createEmptyPlan = () =>
   daysOfWeek.reduce((acc, day) => {
-    acc[day] = { primary: null, secondary: null };
+    acc[day] = { primary: null, secondary: null, mealPrep: null };
     return acc;
   }, {} as Record<string, DayPlan>);
 
@@ -88,11 +89,12 @@ const loadPlanFromStorage = (): Record<string, DayPlan> => {
       daysOfWeek.forEach((day) => {
         const value = parsed[day];
         if (typeof value === 'string' || value === null) {
-          base[day] = { primary: value, secondary: null };
+          base[day] = { primary: value, secondary: null, mealPrep: null };
         } else if (value && typeof value === 'object') {
           const primary = typeof value.primary === 'string' || value.primary === null ? value.primary : null;
           const secondary = typeof value.secondary === 'string' || value.secondary === null ? value.secondary : null;
-          base[day] = { primary, secondary };
+          const mealPrep = typeof value.mealPrep === 'string' || value.mealPrep === null ? value.mealPrep : null;
+          base[day] = { primary, secondary, mealPrep };
         }
       });
     }
@@ -182,6 +184,7 @@ function App() {
     daysOfWeek.forEach((day) => {
       addIngredientsForDish(weeklyPlan[day]?.primary || null);
       addIngredientsForDish(weeklyPlan[day]?.secondary || null);
+      addIngredientsForDish(weeklyPlan[day]?.mealPrep || null);
     });
     return Object.values(counts).sort((a, b) => a.name.localeCompare(b.name));
   }, [dishes, weeklyPlan]);
@@ -285,13 +288,14 @@ function App() {
       Object.entries(prev).forEach(([day, planned]) => {
         const primary = planned.primary === dishId ? null : planned.primary;
         const secondary = planned.secondary === dishId ? null : planned.secondary;
-        updated[day] = { primary, secondary };
+        const mealPrep = planned.mealPrep === dishId ? null : planned.mealPrep;
+        updated[day] = { primary, secondary, mealPrep };
       });
       return updated;
     });
   };
 
-  const assignDishToDay = (day: string, slot: 'primary' | 'secondary', dishId: string) => {
+  const assignDishToDay = (day: string, slot: 'primary' | 'secondary' | 'mealPrep', dishId: string) => {
     setWeeklyPlan((prev) => {
       const dish = dishes.find((item) => item.id === dishId);
       if (dish?.special) {
@@ -299,6 +303,7 @@ function App() {
           const slots: Array<[string, string | null]> = [
             ['primary', planned.primary],
             ['secondary', planned.secondary],
+            ['mealPrep', planned.mealPrep],
           ];
           return slots.some(([slotName, plannedId]) => {
             if (existingDay === day && slotName === slot) return false;
@@ -325,7 +330,8 @@ function App() {
         Object.entries(prev).forEach(([day, planned]) => {
           const primary = planned.primary === dishId ? null : planned.primary;
           const secondary = planned.secondary === dishId ? null : planned.secondary;
-          updated[day] = { primary, secondary };
+          const mealPrep = planned.mealPrep === dishId ? null : planned.mealPrep;
+          updated[day] = { primary, secondary, mealPrep };
         });
         return updated;
       });
@@ -334,7 +340,7 @@ function App() {
 
   const plannedDishName = (dishId: string | null) => dishes.find((dish) => dish.id === dishId)?.name || 'Pick a dish';
 
-  const clearPlan = (day: string, slot: 'primary' | 'secondary') => assignDishToDay(day, slot, '');
+  const clearPlan = (day: string, slot: 'primary' | 'secondary' | 'mealPrep') => assignDishToDay(day, slot, '');
 
   const toggleAvailable = (name: string, available: boolean) => {
     const key = ingredientKey(name);
@@ -404,11 +410,12 @@ function App() {
     setCopyStatus('idle');
   };
 
-  const hasSpecialElsewhere = (day: string, slot: 'primary' | 'secondary') => {
+  const hasSpecialElsewhere = (day: string, slot: 'primary' | 'secondary' | 'mealPrep') => {
     return Object.entries(weeklyPlan).some(([existingDay, planned]) => {
       const slots: Array<[string, string | null]> = [
         ['primary', planned.primary],
         ['secondary', planned.secondary],
+        ['mealPrep', planned.mealPrep],
       ];
       return slots.some(([slotName, plannedId]) => {
         if (existingDay === day && slotName === slot) return false;
@@ -655,6 +662,11 @@ function App() {
                       <p className="day-subdish">
                         {weeklyPlan[day]?.secondary ? plannedDishName(weeklyPlan[day]?.secondary || null) : 'No secondary'}
                       </p>
+                      {day === 'Sunday' && (
+                        <p className="day-subdish">
+                          {weeklyPlan[day]?.mealPrep ? plannedDishName(weeklyPlan[day]?.mealPrep || null) : 'Meal prep not set'}
+                        </p>
+                      )}
                     </div>
                     <div className="day-actions">
                       <div className="select-group">
@@ -701,6 +713,30 @@ function App() {
                           Clear
                         </button>
                       </div>
+                      {day === 'Sunday' && (
+                        <div className="select-group">
+                          <label className="select-label">Meal prep</label>
+                          <select
+                            value={weeklyPlan[day]?.mealPrep || ''}
+                            onChange={(event) => assignDishToDay(day, 'mealPrep', event.target.value)}
+                          >
+                            <option value="">Pick a dish</option>
+                            {dishOptions.map((dish) => {
+                              const specialDish = dishes.find((item) => item.id === dish.value);
+                              const isDisabled = specialDish?.special && hasSpecialElsewhere(day, 'mealPrep');
+                              return (
+                                <option key={dish.value} value={dish.value} disabled={isDisabled}>
+                                  {dish.label}
+                                  {specialDish?.special ? ' (special)' : ''}
+                                </option>
+                              );
+                            })}
+                          </select>
+                          <button className="ghost" type="button" onClick={() => clearPlan(day, 'mealPrep')}>
+                            Clear
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -727,7 +763,8 @@ function App() {
                     {(() => {
                       const primaryName = weeklyPlan[day]?.primary ? plannedDishName(weeklyPlan[day]?.primary) : '';
                       const secondaryName = weeklyPlan[day]?.secondary ? plannedDishName(weeklyPlan[day]?.secondary) : '';
-                      const names = [primaryName, secondaryName].filter(Boolean).join(' • ');
+                      const mealPrepName = weeklyPlan[day]?.mealPrep ? plannedDishName(weeklyPlan[day]?.mealPrep) : '';
+                      const names = [primaryName, secondaryName, mealPrepName].filter(Boolean).join(' • ');
                       return names || 'Not planned';
                     })()}
                   </span>

@@ -174,5 +174,16 @@
     "includeInPlanner": true,
     "isDefault": true,
     "special": true
+  },
+  {
+    "id": "chicken-rise",
+    "name": "Kyckling och Ris",
+    "ingredients": [
+      "Kycklingfilé 1000g",
+      "Ris"
+    ],
+    "includeInPlanner": true,
+    "isDefault": true,
+    "special": false
   }
 ]
